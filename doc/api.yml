@@ -1,0 +1,133 @@
+openapi: 3.0.3
+info:
+  title: Profiles API
+  description: >
+    API de gestion des profils. La création d'un profil déclenche
+    l'envoi asynchrone d'un email contenant un lien de téléchargement
+    de l'image associée.
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:8080
+    description: Local
+
+tags:
+  - name: Profiles
+
+paths:
+  /profiles:
+    get:
+      tags: [Profiles]
+      summary: Lister tous les profils
+      operationId: getAllProfiles
+      responses:
+        "200":
+          description: Liste des profils
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Profile"
+              examples:
+                default:
+                  value:
+                    - id: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                      fileName: "file"
+                      email: "user@example.com"
+                      createdDate: "2026-07-13T10:15:30Z"
+
+    post:
+      tags: [Profiles]
+      summary: Créer un profil
+      description: >
+        Crée un profil à partir d'un fichier image et d'un email,
+        puis publie un événement asynchrone qui enverra un email
+        de confirmation avec un lien de téléchargement de l'image.
+      operationId: createProfile
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/CreateProfileRequest"
+            encoding:
+              file:
+                contentType: image/png, image/jpeg
+      responses:
+        "201":
+          description: Profil créé
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "400":
+          description: Requête invalide (email manquant/invalide, fichier manquant, ...)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationError"
+
+components:
+  schemas:
+    Profile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        fileName:
+          type: string
+          description: >
+            Nom du fichier tel qu'enregistré. NB: dans l'implémentation
+            actuelle, correspond au nom du champ multipart ("file")
+            et non au nom d'origine du fichier uploadé.
+        email:
+          type: string
+          format: email
+        createdDate:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+        - id
+        - fileName
+        - email
+        - createdDate
+
+    CreateProfileRequest:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+          description: Image du profil (png/jpeg).
+        email:
+          type: string
+          format: email
+      required:
+        - file
+        - email
+
+    ValidationError:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+          example: 400
+        error:
+          type: string
+          example: "Bad Request"
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
