@@ -1,5 +1,12 @@
 package com.example.demo.service;
 
+import com.example.demo.dto.CreateProfileRequest;
+import com.example.demo.entity.Profile;
+import com.example.demo.repository.ProfileRepository;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
 @Service
 @RequiredArgsConstructor
 public class ProfileService {
@@ -12,7 +19,8 @@ public class ProfileService {
 
   public Profile create(CreateProfileRequest request) {
 
-    Profile profile = Profile.builder().fileName(request.fileName()).email(request.email()).build();
+    Profile profile =
+        Profile.builder().fileName(request.file().getName()).email(request.email()).build();
 
     return repository.save(profile);
   }

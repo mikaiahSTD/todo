@@ -3,10 +3,13 @@ package com.example.demo.endpoint.rest.controller;
 import com.example.demo.dto.CreateProfileRequest;
 import com.example.demo.endpoint.event.EventProducer;
 import com.example.demo.endpoint.event.model.SendEmailProfileValidated;
-import com.example.demo.entity.Profile;
 import com.example.demo.service.ProfileService;
+import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,15 +21,24 @@ public class ProfileController {
   private final EventProducer<SendEmailProfileValidated> eventProducer;
 
   @GetMapping
-  public List<Profile> getAll() {
-    return service.getAll();
+  public ResponseEntity<?> getAll() {
+    return ResponseEntity.ok().body(service.getAll());
   }
 
-  @PostMapping
-  public Profile create(@Valid @RequestBody CreateProfileRequest request) {
+  @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public ResponseEntity<?> create(@Valid @ModelAttribute CreateProfileRequest request) {
+
     var profile = service.create(request);
-    var event = SendEmailProfileValidated.builder().build();
+
+    var event =
+        SendEmailProfileValidated.builder()
+            .profileId(profile.getId())
+            .fileName(profile.getFileName())
+            .to(profile.getEmail())
+            .build();
+
     eventProducer.accept(List.of(event));
-    return service.create(profile);
+
+    return ResponseEntity.status(HttpStatus.CREATED).body(profile);
   }
 }
