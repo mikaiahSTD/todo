@@ -20,7 +20,10 @@ public class ProfileService {
   public Profile create(CreateProfileRequest request) {
 
     Profile profile =
-        Profile.builder().fileName(request.file().getOriginalFilename()).email(request.email()).build();
+        Profile.builder()
+            .fileName(request.file().getOriginalFilename())
+            .email(request.email())
+            .build();
 
     return repository.save(profile);
   }
